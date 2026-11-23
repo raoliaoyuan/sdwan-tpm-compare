@@ -98,7 +98,9 @@ p { margin: 0 0 12px; }
 .verdict.mix { border-top-color: var(--yes); }
 .verdict .who { font-size: 13px; color: var(--muted); line-height: 1.45; }
 .verdict .who b { display: block; color: var(--ink); font-size: 14.5px; }
-.verdict .say { margin: 10px 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.verdict .say { margin: 8px 0 6px; line-height: 2.1; }
+.verdict .say .pill { margin-right: 7px; }
+.verdict .what { font-size: 13.5px; font-weight: 650; color: var(--ink); }
 .verdict p { font-size: 13px; line-height: 1.6; color: var(--muted); margin: 0; }
 .pill {
   display: inline-block; font-size: 13px; font-weight: 650; line-height: 1;
@@ -249,34 +251,34 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <header>
   <p class="eyebrow">SD-WAN 设备 · 证书私钥保护 · 横向对比</p>
-  <h1>管理员能不能拿到明文的证书私钥？<br>四家 SD-WAN 设备汇总对比</h1>
+  <h1>管理员能不能拿到明文的证书私钥？四家 <span style="white-space:nowrap">SD-WAN</span> 设备汇总对比</h1>
   <p class="lede">对比对象：FortiGate（FortiOS 7.4.13 与 7.6.1+）、华为 NetEngine AR8140-T、VeloCloud Edge 3800、Cisco Catalyst SD-WAN。衡量标准只有一条：<b>包括管理员在内，没有任何人能拿到明文的、用于隧道或控制面认证的证书私钥。</b></p>
   <p class="meta">资料截至 2026-11-21 · FortiGate 两列含真机实测（已标注），其余三家仅依据公开文档、未上真机</p>
 
   <div class="verdicts">
     <div class="verdict no">
       <div class="who"><b>FortiGate</b>FortiOS 7.4.13</div>
-      <div class="say"><span class="pill no">做不到</span></div>
+      <div class="say"><span class="pill no">做不到</span><span class="what">任何人（含管理员）都拿不到明文私钥</span></div>
       <p>主口令由管理员手工输入，知道的人可离线解配置；管理员重设证书私钥密码后即可导出明文，真机实测成立。</p>
     </div>
     <div class="verdict no">
       <div class="who"><b>FortiGate</b>FortiOS 7.6.1+</div>
-      <div class="say"><span class="pill no">做不到</span></div>
+      <div class="say"><span class="pill no">做不到</span><span class="what">任何人（含管理员）都拿不到明文私钥</span></div>
       <p>主口令改为设备随机生成，挡得住偷备份、偷盘，但挡不住已登录的管理员：重设私钥密码即可解出明文（7.6.8 真机）。</p>
     </div>
     <div class="verdict no">
       <div class="who"><b>华为 AR8140-T</b>YunShan V600R021–R026</div>
-      <div class="say"><span class="pill no">做不到</span></div>
+      <div class="say"><span class="pill no">做不到</span><span class="what">任何人（含管理员）都拿不到明文私钥</span></div>
       <p>设了 <code>exportable</code> 的密钥可直接导出；出厂默认主密钥是固定值。</p>
     </div>
     <div class="verdict unk">
       <div class="who"><b>VeloCloud Edge 3800</b>SASE 5.2+／Arista 6.x–7.x</div>
-      <div class="say"><span class="pill unk">未证实</span></div>
+      <div class="say"><span class="pill unk">未证实</span><span class="what">任何人（含管理员）都拿不到明文私钥</span></div>
       <p>没有发现能抵御管理员的硬件保证，也没有发现已证实的导出路径。</p>
     </div>
     <div class="verdict mix">
       <div class="who"><b>Cisco Catalyst SD-WAN</b>cEdge，IOS XE 17.15.x</div>
-      <div class="say"><span class="pill yes">身份私钥：做到</span><span class="pill unk">其余：未证实</span></div>
+      <div class="say"><span class="pill yes">身份私钥：做到</span><span class="pill unk">其余：未证实</span><span class="what">任何人（含管理员）都拿不到明文私钥</span></div>
       <p>SUDI／板卡 ID 私钥在安全芯片内、不可导出；企业证书未证实；数据面靠对称密钥，默认由 Controller 持有。</p>
     </div>
   </div>
