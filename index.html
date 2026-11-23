@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SD-WAN 设备证书私钥保护：四家汇总对比</title>
+<meta name="description" content="FortiGate、华为 AR8140-T、VeloCloud Edge 3800、Cisco Catalyst SD-WAN 四家设备对证书私钥的保护方式对比：管理员能否拿到明文私钥。">
+<style>
+:root {
+  --bg: #f6f4ee;
+  --surface: #ffffff;
+  --ink: #1b1e22;
+  --muted: #5a626c;
+  --rule: #dcd8cd;
+  --rule-soft: #ebe8df;
+  --accent: #1d5c68;
+  --accent-soft: #e2eff1;
+  --key: #9a6410;
+  --key-tint: #fcf6e5;
+  --no: #a62920;      --no-bg: #fbe8e5;
+  --unk: #855600;     --unk-bg: #fcefd0;
+  --yes: #1a6a3a;     --yes-bg: #e1f2e6;
+  --code-bg: #efece3;
+  --shadow: 0 1px 2px rgba(30, 28, 20, .06), 0 6px 20px rgba(30, 28, 20, .05);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131619;
+    --surface: #1a1e22;
+    --ink: #e7e4dc;
+    --muted: #9ba4ae;
+    --rule: #2e353c;
+    --rule-soft: #252b31;
+    --accent: #72c4d0;
+    --accent-soft: #16303a;
+    --key: #e3b04f;
+    --key-tint: #262113;
+    --no: #ff9f94;    --no-bg: #3b1d1a;
+    --unk: #efc46c;   --unk-bg: #372c12;
+    --yes: #82d6a0;   --yes-bg: #163322;
+    --code-bg: #262c32;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.7 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+.page { max-width: 1560px; margin: 0 auto; padding: 40px 32px 72px; }
+.narrow { max-width: 900px; }
+a { color: var(--accent); text-underline-offset: 2px; }
+code {
+  font: 0.9em/1.4 ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+  word-break: break-word;
+}
+b, strong { font-weight: 650; }
+
+/* ---------- header ---------- */
+.eyebrow {
+  font-size: 12.5px; letter-spacing: .12em; color: var(--accent);
+  font-weight: 600; margin: 0 0 10px;
+}
+h1 {
+  font-family: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+  font-size: clamp(26px, 3.4vw, 38px);
+  line-height: 1.25; margin: 0 0 14px; font-weight: 700; text-wrap: balance;
+}
+.lede { font-size: 16.5px; color: var(--muted); margin: 0 0 6px; max-width: 860px; }
+.lede b { color: var(--ink); }
+.meta { font-size: 13px; color: var(--muted); margin: 14px 0 0; }
+
+h2 {
+  font-family: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+  font-size: 22px; margin: 52px 0 14px; line-height: 1.35;
+}
+h3 { font-size: 15.5px; margin: 26px 0 8px; }
+p { margin: 0 0 12px; }
+
+/* ---------- verdict strip ---------- */
+.verdicts {
+  display: grid; gap: 12px; margin: 30px 0 0;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.verdict {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 10px; padding: 14px 16px 15px; box-shadow: var(--shadow);
+  border-top: 3px solid var(--rule);
+}
+.verdict.no  { border-top-color: var(--no); }
+.verdict.unk { border-top-color: var(--unk); }
+.verdict.mix { border-top-color: var(--yes); }
+.verdict .who { font-size: 13px; color: var(--muted); line-height: 1.45; }
+.verdict .who b { display: block; color: var(--ink); font-size: 14.5px; }
+.verdict .say { margin: 10px 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.verdict p { font-size: 13px; line-height: 1.6; color: var(--muted); margin: 0; }
+.pill {
+  display: inline-block; font-size: 13px; font-weight: 650; line-height: 1;
+  padding: 6px 10px; border-radius: 999px; white-space: nowrap;
+}
+.pill.no  { color: var(--no);  background: var(--no-bg); }
+.pill.unk { color: var(--unk); background: var(--unk-bg); }
+.pill.yes { color: var(--yes); background: var(--yes-bg); }
+
+/* ---------- reading guide ---------- */
+.guide { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 6px; }
+.guide div {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px;
+}
+.guide .n {
+  font: 600 13px/1 ui-monospace, Menlo, Consolas, monospace; color: var(--accent);
+  display: block; margin-bottom: 8px;
+}
+.guide b { display: block; margin-bottom: 4px; }
+.guide p { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.65; }
+
+/* ---------- controls ---------- */
+.controls {
+  display: none; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+  margin: 22px 0 12px; font-size: 13px;
+}
+.js .controls { display: flex; }
+.controls .lbl { color: var(--muted); margin-right: 2px; }
+.controls .sep { width: 1px; height: 20px; background: var(--rule); margin: 0 6px; }
+.chip { position: relative; display: inline-flex; }
+.chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.chip span {
+  border: 1px solid var(--rule); background: var(--surface); color: var(--muted);
+  padding: 5px 12px; border-radius: 999px; line-height: 1.4; user-select: none;
+}
+.chip input:checked + span { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip.keychip input:checked + span { border-color: var(--key); background: var(--key-tint); color: var(--key); }
+
+/* ---------- table ---------- */
+.tablewrap { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 13.5px; line-height: 1.65; }
+thead th {
+  text-align: left; vertical-align: bottom; padding: 14px 14px 12px;
+  background: var(--surface); border-bottom: 2px solid var(--ink);
+  font-size: 14px; line-height: 1.35;
+}
+thead th:first-child { width: 138px; border-top-left-radius: 10px; }
+thead th:last-child { border-top-right-radius: 10px; }
+thead th small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 3px; line-height: 1.45; }
+tbody th, tbody td { vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--rule-soft); }
+tbody tr:last-child > * { border-bottom: 0; }
+tbody th { text-align: left; font-weight: 650; font-size: 13.5px; line-height: 1.5; }
+tbody td { border-left: 1px solid var(--rule-soft); overflow-wrap: anywhere; }
+tr.key > * { background: var(--key-tint); }
+tr.key > th { box-shadow: inset 3px 0 0 var(--key); }
+.kbadge {
+  display: inline-block; font-size: 11px; font-weight: 650; letter-spacing: .06em;
+  color: var(--key); border: 1px solid currentColor; border-radius: 4px;
+  padding: 1px 5px; line-height: 1.3; margin-bottom: 5px;
+}
+tr.bottom > * { border-top: 2px solid var(--ink); background: var(--surface); }
+tr.bottom > th { font-size: 14px; }
+tr.bottom > th small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 4px; }
+tr.bottom td .pill { margin-bottom: 8px; }
+.tag {
+  display: inline-block; font-size: 11.5px; font-weight: 600; line-height: 1.35;
+  color: var(--accent); background: var(--accent-soft);
+  padding: 0 6px; border-radius: 4px; white-space: nowrap; vertical-align: 1px;
+}
+.tag.inf { color: var(--unk); background: var(--unk-bg); }
+.no-t  { color: var(--no);  font-weight: 650; }
+.unk-t { color: var(--unk); font-weight: 650; }
+.yes-t { color: var(--yes); font-weight: 650; }
+
+.hide-c1 [data-c="1"], .hide-c2 [data-c="2"], .hide-c3 [data-c="3"],
+.hide-c4 [data-c="4"], .hide-c5 [data-c="5"] { display: none; }
+.key-only tbody tr:not(.key):not(.bottom) { display: none; }
+
+@media (min-width: 1101px) {
+  thead th { position: sticky; top: 0; z-index: 2; }
+}
+@media (max-width: 1100px) {
+  .tablewrap { overflow-x: auto; }
+  table { min-width: 1080px; }
+  .verdicts { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+}
+
+/* ---------- notes ---------- */
+.note {
+  background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+  border-radius: 8px; padding: 14px 18px; margin: 14px 0; font-size: 14.5px;
+}
+.note p:last-child, .note ul:last-child { margin-bottom: 0; }
+ul, ol { margin: 0 0 12px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+details {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
+  margin: 12px 0; font-size: 14.5px;
+}
+summary { cursor: pointer; padding: 13px 18px; font-weight: 650; }
+summary small { font-weight: 400; color: var(--muted); margin-left: 6px; }
+details > div { padding: 2px 18px 16px; border-top: 1px solid var(--rule-soft); }
+details ol { margin-top: 12px; }
+.legend { display: grid; grid-template-columns: max-content 1fr; gap: 8px 14px; font-size: 14px; align-items: baseline; }
+.sources { font-size: 13.5px; columns: 2; column-gap: 40px; }
+.sources h3 { margin: 0 0 6px; font-size: 13.5px; break-after: avoid; }
+.sources ul { margin-bottom: 18px; break-inside: avoid; }
+footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); }
+
+/* ---------- phone: stack each row into a card ---------- */
+@media (max-width: 760px) {
+  .page { padding: 26px 16px 56px; }
+  .guide { grid-template-columns: 1fr; }
+  .sources { columns: 1; }
+  .legend { grid-template-columns: 1fr; gap: 2px 0; }
+  .legend span:nth-child(even) { margin-bottom: 10px; }
+  .js .tablewrap { overflow: visible; background: none; border: 0; box-shadow: none; }
+  .js table { min-width: 0; display: block; }
+  .js thead { display: none; }
+  .js tbody, .js tbody tr, .js tbody th, .js tbody td { display: block; }
+  .js tbody tr {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+    margin-bottom: 14px; overflow: hidden;
+  }
+  .js tbody th { font-size: 15px; padding: 12px 14px; border-bottom: 1px solid var(--rule); }
+  .js tbody td { border-left: 0; padding: 10px 14px 12px; }
+  .js tbody td::before {
+    content: attr(data-label); display: block; font-size: 12px; font-weight: 650;
+    color: var(--accent); margin-bottom: 3px;
+  }
+  .js tr.key > th { box-shadow: inset 0 3px 0 var(--key); }
+  .js tr.bottom > * { border-top: 0; }
+  .js tr.bottom { border-color: var(--ink); }
+  .js.js .hide-c1 [data-c="1"], .js.js .hide-c2 [data-c="2"], .js.js .hide-c3 [data-c="3"],
+  .js.js .hide-c4 [data-c="4"], .js.js .hide-c5 [data-c="5"] { display: none; }
+  .js.js .key-only tbody tr:not(.key):not(.bottom) { display: none; }
+}
+@media print {
+  .controls { display: none !important; }
+  thead th { position: static; }
+  body { background: #fff; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <p class="eyebrow">SD-WAN 设备 · 证书私钥保护 · 横向对比</p>
+  <h1>管理员能不能拿到明文的证书私钥？<br>四家 SD-WAN 设备汇总对比</h1>
+  <p class="lede">对比对象：FortiGate（FortiOS 7.4.13 与 7.6.1+）、华为 NetEngine AR8140-T、VeloCloud Edge 3800、Cisco Catalyst SD-WAN。衡量标准只有一条：<b>包括管理员在内，没有任何人能拿到明文的、用于隧道或控制面认证的证书私钥。</b></p>
+  <p class="meta">资料截至 2026-11-21 · FortiGate 两列含真机实测（已标注），其余三家仅依据公开文档、未上真机</p>
+
+  <div class="verdicts">
+    <div class="verdict no">
+      <div class="who"><b>FortiGate</b>FortiOS 7.4.13</div>
+      <div class="say"><span class="pill no">做不到</span></div>
+      <p>主口令由管理员手工输入，知道的人可离线解配置；管理员重设证书私钥密码后即可导出明文，真机实测成立。</p>
+    </div>
+    <div class="verdict no">
+      <div class="who"><b>FortiGate</b>FortiOS 7.6.1+</div>
+      <div class="say"><span class="pill no">做不到</span></div>
+      <p>主口令改为设备随机生成，挡得住偷备份、偷盘，但挡不住已登录的管理员：重设私钥密码即可解出明文（7.6.8 真机）。</p>
+    </div>
+    <div class="verdict no">
+      <div class="who"><b>华为 AR8140-T</b>YunShan V600R021–R026</div>
+      <div class="say"><span class="pill no">做不到</span></div>
+      <p>设了 <code>exportable</code> 的密钥可直接导出；出厂默认主密钥是固定值。</p>
+    </div>
+    <div class="verdict unk">
+      <div class="who"><b>VeloCloud Edge 3800</b>SASE 5.2+／Arista 6.x–7.x</div>
+      <div class="say"><span class="pill unk">未证实</span></div>
+      <p>没有发现能抵御管理员的硬件保证，也没有发现已证实的导出路径。</p>
+    </div>
+    <div class="verdict mix">
+      <div class="who"><b>Cisco Catalyst SD-WAN</b>cEdge，IOS XE 17.15.x</div>
+      <div class="say"><span class="pill yes">身份私钥：做到</span><span class="pill unk">其余：未证实</span></div>
+      <p>SUDI／板卡 ID 私钥在安全芯片内、不可导出；企业证书未证实；数据面靠对称密钥，默认由 Controller 持有。</p>
+    </div>
+  </div>
+</header>
+
+<section>
+  <h2>先分清三种“保护”</h2>
+  <p class="narrow">表中 ①②③ 三行对应下面三件事。它们层层递进，不能用前一件去证明后一件。“任何人都拿不到明文”对应第 ③ 件；“加密落盘了”只证明了第 ① 件。</p>
+  <div class="guide">
+    <div><span class="n">① at-rest</span><b>离线 / 落盘保护</b><p>只拿到盘上那段密文，还不足以还原私钥。防的是偷盘、偷备份。</p></div>
+    <div><span class="n">② in-use</span><b>运行时 / 在用保护</b><p>做密码运算的那一刻，私钥对设定的对手不可见。如果声称连特权主机软件都能挡，那 OS root 也必须读不到。</p></div>
+    <div><span class="n">③ non-extractable</span><b>芯片内生成且不可导出</b><p>私钥在安全芯片 / HSM 内生成，整个生命周期（含备份、恢复、迁移）里从不以明文离开。这才是“私钥永不出硬件”。</p></div>
+  </div>
+  <p class="narrow" style="margin-top:14px">两条容易混的：<b>“接口不可导出”不等于“硬件不可提取”</b>（某条命令拒绝导出，只说明那个接口不给）；<b>“芯片内不可导出”不等于“芯片内生成”</b>（Cisco 的 SUDI 是后端 HSM 生成后加密注入芯片的）。</p>
+</section>
+
+<section>
+  <h2>汇总对比表</h2>
+  <p class="narrow">本表针对“被选来做隧道 / 控制面认证的那张证书的私钥”，不含远程证明密钥和纯管理证书。标“关键”的行与“管理员也不能拿到明文私钥”直接相关。</p>
+  <ul class="narrow">
+    <li><b>FortiGate 分两列</b>：两个版本绝大多数行相同，主要差别在第 ⑥ 行——7.4 的主口令由管理员手工输入，7.6.1 起由设备随机生成、无人知晓。</li>
+    <li><b>Cisco 一列要分两头读</b>：它的设备身份证书（SUDI／板卡 ID 或企业证书）用于控制面认证，数据面机密性靠对称密钥、不靠证书私钥，所以同一格里常分“身份私钥”和“数据面对称密钥”来说。</li>
+  </ul>
+
+  <div class="controls" aria-label="表格筛选">
+    <span class="lbl">显示列</span>
+    <label class="chip"><input type="checkbox" data-col="1" checked><span>FortiGate 7.4.13</span></label>
+    <label class="chip"><input type="checkbox" data-col="2" checked><span>FortiGate 7.6.1+</span></label>
+    <label class="chip"><input type="checkbox" data-col="3" checked><span>华为 AR8140-T</span></label>
+    <label class="chip"><input type="checkbox" data-col="4" checked><span>VeloCloud 3800</span></label>
+    <label class="chip"><input type="checkbox" data-col="5" checked><span>Cisco</span></label>
+    <span class="sep"></span>
+    <label class="chip keychip"><input type="checkbox" id="keyOnly"><span>只看关键行</span></label>
+  </div>
+
+  <div class="tablewrap">
+  <table id="cmp">
+    <thead>
+      <tr>
+        <th scope="col">维度</th>
+        <th scope="col" data-short="FortiGate 7.4.13">FortiGate<small>FortiOS 7.4.13</small></th>
+        <th scope="col" data-short="FortiGate 7.6.1+">FortiGate<small>FortiOS 7.6.1+</small></th>
+        <th scope="col" data-short="华为 AR8140-T">华为 NetEngine AR8140-T<small>YunShan V600R021–R026</small></th>
+        <th scope="col" data-short="VeloCloud Edge 3800">VeloCloud Edge 3800<small>SASE 5.2+／Arista 6.x–7.x</small></th>
+        <th scope="col" data-short="Cisco Catalyst SD-WAN">Cisco Catalyst SD-WAN cEdge<small>C8300/8500，IOS XE 17.15.x；对照 vEdge</small></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">设备安全芯片叫法 / 标配情况</th>
+        <td>TPM；带 TPM 的型号才有（50G/80F/90G/120G/200G/400F/900G/3000F 等）</td>
+        <td>同 7.4.13（TPM，带 TPM 的型号才有）</td>
+        <td><b>HTM</b>（Hardware Trust Module），仅 <code>-T</code> 型号（AR8140-T-12G10XG）</td>
+        <td>TPM 2.0，硬件型号标配；部分型号为中国版 TPM 模块；虚拟 Edge 无</td>
+        <td><b>TAm / ACT2</b>（Trust Anchor module）；C8500 列为 Trust Anchor 2.0（<b>≠ TPM 2.0</b>）。vEdge：100/1000/2000 为 Trusted Board ID 芯片，vEdge 5000 为 TPM</td>
+      </tr>
+      <tr>
+        <th scope="row">设备安全芯片的用途</th>
+        <td>加密“主口令”（两层加密链的顶层）；另保管出厂证书 Fortinet_Factory/_Backup 的身份，这类证书<b>禁用于 IPsec</b></td>
+        <td>同 7.4.13；7.4.8 起“出厂身份私钥存入 TPM、禁用于 IPsec”的表述更明确</td>
+        <td><b>仅</b>做可信启动度量和远程证明；<b>不加密 PKI 私钥</b></td>
+        <td>存在 TPM；有“加密设备机密”（Encrypt Device Secrets）这项<b>可选</b>功能；<b>二者的绑定关系官方未公开</b></td>
+        <td><b>保管设备身份证书（SUDI／板卡 ID）私钥并用于控制面认证</b>；另做可信启动。<b>这点与前三家不同</b>：身份私钥真正进入了隧道信任链</td>
+      </tr>
+      <tr>
+        <th scope="row">证书私钥在哪生成</th>
+        <td>设备上软件生成（<b>非 TPM 内</b>）；注：导入的私钥在设备外存在过</td>
+        <td>同 7.4.13（<b>非 TPM 内</b>）</td>
+        <td>设备上软件生成（<b>非 HTM 内</b>）</td>
+        <td>Edge 软件生成 RSA 2048/4096（<b>非 TPM 内</b>）</td>
+        <td>SUDI：<b>厂商后端 FIPS L3 HSM 生成后加密注入芯片</b>（<b>非芯片内生成</b>）；部署后续密钥要求芯片内生成。企业证书：软件 / 硬件均<span class="unk-t">未证实</span></td>
+      </tr>
+      <tr>
+        <th scope="row">① 落盘 / 离线形态</th>
+        <td>开 PDE：AES128 密文（主口令派生）；不开：内置默认密钥（弱，FG-IR-19-007）</td>
+        <td>开 PDE：AES128 密文（主口令派生）。<b>7.6.3 起部分无 TPM 型号移除 PDE</b>（7.6.1 的 TPM 型号仍可用）</td>
+        <td>AES256 密文，存 <code>flash:/pki</code></td>
+        <td>存 <code>/etc/vc_private</code>；开 Encrypt Device Secrets 才加密，默认是否明文<span class="unk-t">未知</span>（关闭 ≠ 一定明文）</td>
+        <td>身份私钥在芯片内、不落普通盘。Secure Storage 用硬件锚加密敏感配置（<b>可关闭 → private-config 明文</b>）；是否覆盖 SD-WAN 身份私钥官方<b>未点名</b></td>
+      </tr>
+      <tr class="key">
+        <th scope="row"><span class="kbadge">关键</span><br>② 运行时 / 在用形态</th>
+        <td><b>内存明文</b> <span class="tag inf">推断</span>（官方未明述运行时形态；普通证书无 TPM 内签名路径、由 IKE 从 <code>/etc/cert/local</code> 加载私钥，符合软件解密使用）</td>
+        <td><b>内存明文</b> <span class="tag inf">推断</span>（同 7.4.13）</td>
+        <td><b>内存明文</b></td>
+        <td><b>内存明文</b>（CMVP #3435 安全策略写明；对应具体模块 / 版本，不自动适用于所有后续 Edge 版本）</td>
+        <td><b>身份私钥</b>的签名运算在芯片边界内（仅认证）；<b>数据面对称密钥</b>在 DRAM 明文。企业证书私钥运行时形态<span class="unk-t">未证实</span></td>
+      </tr>
+      <tr class="key">
+        <th scope="row"><span class="kbadge">关键</span><br>③ 是否“芯片内生成且不可导出”</th>
+        <td><span class="no-t">否</span>（仅 7.4.8+ 的 TPM 型工厂证书在芯片内且不可导出，但那类证书<b>禁用于 IPsec</b>）</td>
+        <td><span class="no-t">否</span>（同 7.4.13）</td>
+        <td><span class="no-t">否</span>（<code>exportable</code> 密钥可导出 PEM/PKCS12）</td>
+        <td><span class="no-t">否</span>（软件模块生成、存文件系统）</td>
+        <td>SUDI：<span class="yes-t">不可导出 ✓</span>、但<span class="no-t">非芯片内生成 ✗</span>；企业证书：<span class="unk-t">未证实</span>；数据面无“证书私钥”一说</td>
+      </tr>
+      <tr class="key">
+        <th scope="row"><span class="kbadge">关键</span><br>④ 有没有“支持的”导出路径</th>
+        <td><b>已收紧，取决于证书私钥密码</b>：GUI 下载只给公钥；<code>unset password</code> 取明文的老路 6.0 起已封（FG-IR-19-134）。<code>execute vpn certificate local export</code> 的 p12 含私钥，但受<b>证书自身的私钥密码</b>保护（建 CSR 时设；留空则设备随机生成且<b>不可找回</b>）——知道该密码才能用。<b>但该密码不是真屏障：管理员可对已有证书 <code>set password &lt;新&gt;</code>，FortiOS 用新密码重封同一把私钥，随后导出 / 读取即可解出明文</b> <span class="tag">真机实证</span>（见表后“真机实证”）</td>
+        <td><b>同 7.4.13</b>：导出命令与 p12 行为不变；私钥仍受证书私钥密码保护。<b>开 PDE / 随机主口令不改变导出能力</b>（官方未写 PDE 影响导出）</td>
+        <td><b>分情况</b>：建密钥时设了 <code>exportable</code> → 有；非 <code>exportable</code> → <span class="unk-t">未证实</span></td>
+        <td>没找到已证实的私钥导出路径</td>
+        <td>SUDI：官方称<b>取不出设备</b>；企业证书：<span class="unk-t">未证实</span>（通用 IOS XE 有 <code>exportable</code> 选项，但未映射到这把私钥）</td>
+      </tr>
+      <tr class="key">
+        <th scope="row"><span class="kbadge">关键</span><br>⑤ 受限管理员能否读运行态内存明文</th>
+        <td>仅凭“内存有明文”不能断定；要看角色与能否触达底层</td>
+        <td>同 7.4.13</td>
+        <td>同 FortiGate，<span class="unk-t">未证实</span></td>
+        <td>同 FortiGate；且要区分 Orchestrator 角色与 Edge shell 访问</td>
+        <td>未核对到读身份私钥的接口；数据面 AES 密钥 <code>show</code> 只给 SPI/hash（无完整明文接口），但<b>传统模式下 Controller 在信任边界内</b></td>
+      </tr>
+      <tr class="key">
+        <th scope="row"><span class="kbadge">关键</span><br>⑥ 加密私钥的 KEK 锚在哪 / 谁知道</th>
+        <td>主口令：<b>管理员手工输入</b>（知道的人可带到别的设备恢复配置）。KEK 由 TPM primary key 保护</td>
+        <td>主口令：<b>设备随机生成、无人输入、CLI 不再提示</b>（但不等于事后无人能知）。KEK 仍由 TPM primary key 保护；RMA / 换机官方只建议改由 FortiManager 管理配置</td>
+        <td>KMC：根 → 主 → 工作三层（不同密钥）；根密钥“固化在 CPU”（HCIST 为通用架构，AR 专门映射待确认）；出厂默认主密钥是<b>固定值</b>（可被偷 / 破）；换主密钥只需登录口令</td>
+        <td><b>未公开</b></td>
+        <td>身份私钥由芯片直接保管，<b>不走“KEK 加密私钥”模型</b>；Secure Storage 的设备专属密钥锚在硬件信任锚</td>
+      </tr>
+      <tr>
+        <th scope="row">物理接触 / 拆盘</th>
+        <td>TPM 不加密磁盘；秘密字段仍是密文；假定物理受保护</td>
+        <td>同 7.4.13</td>
+        <td>认证前提假定物理保护、管理员可信，不防物理接触</td>
+        <td>可进 BIOS（CVE-2024-22247），缓解仅设 BIOS 口令 / 禁 USB；Secure Boot 默认关</td>
+        <td>TAm 防篡改；Thrangrycat（CVE-2019-1649）是 secure boot 旁路、需高权限 + 底层访问，<span class="unk-t">未证实</span>能读出 SUDI 私钥</td>
+      </tr>
+      <tr>
+        <th scope="row">是否达成“私钥永不出硬件”</th>
+        <td><span class="no-t">未达成 / 未证实</span></td>
+        <td><span class="no-t">未达成 / 未证实</span></td>
+        <td><span class="no-t">未达成 / 未证实</span></td>
+        <td><span class="no-t">未达成 / 未证实</span></td>
+        <td><span class="yes-t">身份私钥：部署后设备侧达成</span>（但非芯片内生成、只覆盖控制面认证）；<span class="no-t">企业证书与数据面密钥：未达成 / 未证实</span></td>
+      </tr>
+      <tr>
+        <th scope="row">关键时间点</th>
+        <td>7.4 分支；带 TPM 型号可开 PDE</td>
+        <td><b>7.6.1 起主口令随机生成</b>；7.6.3 起部分无 TPM 型号移除 PDE；8.0 FortiManager 支持更新后的 PDE 主口令</td>
+        <td>V600R021–R026（R026C00 最新）；HCIST 白皮书 2025-09-18</td>
+        <td>5.2 起有 Encrypt Device Secrets；3800 已于 2025-07-06 停售，替代型号 Edge 4100</td>
+        <td>IOS XE 17.15.x / 控制组件 20.15.x；pairwise 16.12.1b 起默认关；<b>26.2 起数据面引入 IKEv2</b>；SUDI 到期约 2029-05-14（限列出产品）</td>
+      </tr>
+      <tr class="bottom">
+        <th scope="row">底线<small>严格口径：排除运行时内存，连管理员也无法从“内存之外”拿到明文私钥？</small></th>
+        <td><span class="pill no">做不到</span><br>管理员知道主口令，可离线解 config <span class="tag">官方机制</span>。另外“<code>set password &lt;新&gt;</code> 重封私钥再导出”这条路，7.6.8 真机实测成立，7.4.13 也于 2026-11-21 在 AWS PAYG 上真机测过（且 PDE 真正开启），同样成立 <span class="tag">真机实证</span></td>
+        <td><span class="pill no">做不到</span><br>管理员对“设备自生成、私钥密码随机未知”的证书执行 <code>set password &lt;新&gt;</code>，FortiOS 会用新密码<b>重新加密同一把私钥</b>（公钥模数不变、非重新生成），随后 <code>show full-configuration</code> / 导出得到的私钥即可用该新密码 <b>openssl 成功解成明文</b>——<b>只用管理员权限重设证书自身的私钥密码，不需要主口令</b>；<code>unset password</code> 被拒（-14），但根本无需它 <span class="tag">真机实证</span>。<br>实测范围：7.6.8（EVE-NG，PDE 未开启，含一台虚拟 TPM 已初始化的节点）＋ <b>7.4.13（AWS PAYG，<code>private-data-encryption</code> 真正开启）</b>；PDE 开启状态下该路径照样成立。7.6.1+ 只差主口令改为设备随机，它不参与证书自身密码的加解密，按机制同样成立。主口令设备随机 + 封 TPM 仍能挡“离线盗备份”，但挡不住在机管理员。7.6.1–7.6.7 与 8.0 没有单独测，公开资料未见封堵 <span class="tag inf">推断</span></td>
+        <td><span class="pill no">做不到</span><br><code>exportable</code> 密钥可直接导出；出厂默认主密钥为固定值</td>
+        <td><span class="pill unk">未证实</span><br>未发现可抵御管理员的硬件保证，也未发现已证实的导出路径</td>
+        <td><span class="pill yes">SUDI／板卡 ID：做到</span><br>私钥在芯片、不可导出、无受支持提取路径。企业证书：<span class="unk-t">未证实</span>；数据面对称密钥另论（非证书私钥，默认 Controller 持有）</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="narrow">
+  <h2>读表时要注意</h2>
+  <div class="note">
+    <p><b>按对手、证书来源与密钥用途分格看。</b>受限配置管理员、掌握底层的 OS root、厂商维护工程师是不同的对手；设备自生成、从外部导入、厂商注入的证书风险也不同（导入的私钥在设备外存在过，可能已有副本）。Cisco 还要分“身份私钥”和“数据面对称密钥”两头：前者有硬件保管的强依据，后者在默认模式下 Controller 就持有。</p>
+    <p>表里的“未证实”指公开文档没有给出结论——既不等于“安全”，也不等于“可提取”。</p>
+  </div>
+
+  <h3>FortiGate：“主口令封进 TPM”不等于“私钥拿不到”</h3>
+  <p>7.6.1 起主口令由设备随机生成、经 TPM primary key 封存、无人知道。这把离线 / 落盘防护做扎实了：偷盘、偷备份解不开，也堵了 7.4 上“带着主口令去别处克隆”的路。但它管不到已登录的管理员：</p>
+  <ul>
+    <li><b>导出的私钥由“证书自身的私钥密码”加密</b>，和主口令是两层、互不相干。这个密码留空时由设备随机生成、无人知道，看上去导出的是打不开的密文。</li>
+    <li><b>但管理员可以把这个密码改成自己知道的</b>：<code>set password &lt;新&gt;</code> 会让 FortiOS 用新密码重新加密同一把私钥，之后导出或 <code>show</code> 出来的私钥就能解开。开不开 PDE、有没有 TPM 都一样。</li>
+    <li><b>已经封掉的老路</b>：<code>unset password</code> 取明文 6.0 起已封（FG-IR-19-134）；GUI 下载只给公钥。</li>
+    <li><b>没有“不可导出”开关</b>：<code>config vpn certificate local</code> 下没有 TPM 或 non-exportable 选项。真正封在 TPM 里、不可导出的只有工厂证书（7.4.8+、200G 起），而它禁用于 IPsec。</li>
+  </ul>
+
+  <h3>真机实证</h3>
+  <details>
+    <summary>FortiGate-VM 7.6.8（build 3744，EVE-NG/KVM）<small>2026-11-19 · PDE 未开启</small></summary>
+    <div>
+      <ol>
+        <li><code>execute vpn certificate local generate rsa TESTCSR 512 CN=pde-test.lab</code>，不填密码。<code>show full-configuration</code> 显示 <code>set password ENC …</code>（设备随机生成的私钥密码）和 <code>-----BEGIN ENCRYPTED PRIVATE KEY-----</code>（PKCS#8 加密存储）。试用授权只支持 512 位，与密码 / 导出机制无关。</li>
+        <li>取出这段私钥，用任意已知口令 <code>openssl pkey</code>：解不开（bad decrypt）。随机密码确实未知。</li>
+        <li>管理员执行 <code>config vpn certificate local</code> → <code>edit TESTCSR</code> → <code>set password KnownPass123</code> → <code>end</code>，提交成功。</li>
+        <li><code>openssl pkey -passin pass:KnownPass123</code>：成功解开，解出的公钥模数与第 1 步 CSR 里的一致——是同一把私钥被重新加密，不是重新生成。用错口令仍是 bad decrypt。</li>
+        <li><code>unset password</code> 返回 <code>Certificate 'TESTCSR' is not allowed to unset. Return code -14</code>。这条路是封了的，但上面用的是 <code>set</code>，不需要它。</li>
+      </ol>
+      <p>在另一台虚拟 TPM 已被 FortiOS 识别并初始化的 7.6.8 节点上重复，结果相同。试用授权下没有 <code>private-data-encryption</code> 开关，所以这一轮没有测到 PDE 开启状态。</p>
+    </div>
+  </details>
+  <details>
+    <summary>FortiGate-VM 7.4.13（AWS PAYG，正式授权）<small>2026-11-21 · PDE 已开启</small></summary>
+    <div>
+      <ol>
+        <li><code>set private-data-encryption enable</code> 开启成功：<code>get system status</code> 显示 <code>Private Encryption: Enable</code>，<code>execute private-encryption-key sample</code> 返回 HMAC。</li>
+        <li><code>generate rsa PDEON 2048</code>，不填密码：用已知口令解不开。</li>
+        <li><code>set password KnownPass123</code> 后，用该口令 openssl 解出明文；错口令失败；<code>unset password</code> 返回 -14。</li>
+      </ol>
+      <p>结论：开启 PDE 不改变这条路径。7.6.1+ 与此的差别只是主口令改由设备随机生成，而主口令不参与证书自身密码的加解密，所以按机制同样成立；AWS 上的 7.6.8 没有直接跑。</p>
+    </div>
+  </details>
+
+  <h2>证据标注</h2>
+  <div class="legend">
+    <span><span class="tag">真机实证</span></span><span>在真实运行的设备上按步骤测过，有命令输出为证。</span>
+    <span><span class="tag">官方机制</span></span><span>厂商官方文档写明的事实。</span>
+    <span><span class="tag inf">推断</span></span><span>由官方事实或实测结果推出来的判断，没有直接证据。</span>
+    <span><span class="unk-t">未证实</span></span><span>公开文档没有给出结论；既不等于安全，也不等于可提取。</span>
+  </div>
+
+  <h2>主要来源</h2>
+  <div class="sources">
+    <h3>Fortinet</h3>
+    <ul>
+      <li><a href="https://docs.fortinet.com/document/fortigate/7.6.6/administration-guide/893277/trusted-platform-module-support">FortiOS 7.6.6 管理指南：Trusted Platform Module support</a></li>
+      <li><a href="https://docs.fortinet.com/document/fortigate/7.6.6/cli-reference/556354036/config-vpn-certificate-local">FortiOS 7.6.6 CLI 参考：config vpn certificate local</a></li>
+      <li><a href="https://docs.fortinet.com/document/fortigate/7.4.10/administration-guide/435758">FortiOS 7.4.10 管理指南：FortiGate identity stored in TPM</a></li>
+      <li><a href="https://www.fortiguard.com/psirt/FG-IR-19-007">FG-IR-19-007：Hardcoded symmetric key</a></li>
+      <li><a href="https://fortiguard.com/psirt/FG-IR-19-134">FG-IR-19-134：Exporting a local certificate with private key</a></li>
+      <li><a href="https://community.fortinet.com/fortigate-3/technical-tip-how-to-enable-private-data-encryption-feature-on-a-standalone-fortigate-181068">技术贴：在单机 FortiGate 上开启 PDE</a></li>
+      <li><a href="https://docs.fortinet.com/document/fortimanager/latest/administration-guide/30332/managing-fortigates-with-private-data-encryption">FortiManager 管理指南：纳管开启 PDE 的 FortiGate</a></li>
+    </ul>
+    <h3>华为</h3>
+    <ul>
+      <li><a href="https://www-file.huawei.com/admin/asset/v1/pro/view/a1c4051f4f3849ac9f09c2c301069c3a.pdf">HCIST 计算基础设施安全技术白皮书 1.0（2025-09-18）</a></li>
+    </ul>
+    <h3>VeloCloud</h3>
+    <ul>
+      <li><a href="https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/3435">NIST CMVP 证书 #3435</a></li>
+      <li><a href="https://www.broadcom.com/support/services/vmware-security-advisories/VMSA-2024-0008">VMSA-2024-0008（CVE-2024-22247）</a></li>
+    </ul>
+    <h3>Cisco</h3>
+    <ul>
+      <li><a href="https://www.cisco.com/security/pki/policies/ACT2_SUDI_CA_CPS_v2.1.pdf">ACT2 SUDI CA CPS v2.1（§6.1、§6.2.3）</a></li>
+      <li><a href="https://www.cisco.com/c/en/us/td/docs/routers/cloud_edge/c8300/software_config/cat8300-edge-software-config/security-management/information_about_sudi.html">C8300/C8200：Secure Storage 与 SUDI</a></li>
+      <li><a href="https://www.cisco.com/c/en/us/td/docs/routers/sdwan/configuration/security/ios-xe-17/security-book-xe/ipsec-pairwise-keys.html">Catalyst SD-WAN：IPsec Pairwise Keys</a></li>
+      <li><a href="https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-20190513-secureboot">cisco-sa-20190513-secureboot（Thrangrycat / CVE-2019-1649）</a></li>
+      <li><a href="https://www.cisco.com/c/en/us/support/docs/field-notices/720/fn72094.html">FN-72094：SUDI 证书到期</a></li>
+    </ul>
+  </div>
+
+  <footer>
+    本页是一份厂商横向调研的汇总，不是任何厂商的官方结论。各家产品与文档会更新，使用前请按自己的型号和版本复核。
+  </footer>
+</section>
+
+</div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var table = document.getElementById('cmp');
+  if (!table) return;
+  root.classList.add('js');
+  var heads = Array.prototype.slice.call(table.tHead.rows[0].cells);
+  heads.forEach(function (th, i) { if (i > 0) th.dataset.c = i; });
+  Array.prototype.forEach.call(table.tBodies[0].rows, function (tr) {
+    Array.prototype.forEach.call(tr.cells, function (td, i) {
+      if (i > 0) { td.dataset.c = i; td.dataset.label = heads[i].dataset.short; }
+    });
+  });
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('input[data-col]'));
+  boxes.forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      if (!boxes.some(function (b) { return b.checked; })) { cb.checked = true; return; }
+      table.classList.toggle('hide-c' + cb.dataset.col, !cb.checked);
+    });
+  });
+  var keyOnly = document.getElementById('keyOnly');
+  keyOnly.addEventListener('change', function () {
+    table.classList.toggle('key-only', keyOnly.checked);
+  });
+})();
+</script>
+</body>
+</html>
